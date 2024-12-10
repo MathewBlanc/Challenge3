@@ -11,7 +11,8 @@ import SwiftUI
 struct Challenge3App: App {
     var body: some Scene {
         WindowGroup {
-            EyeTrackingView()
+            ContentView()
+                .preferredColorScheme(.light)
         }
     }
 }
