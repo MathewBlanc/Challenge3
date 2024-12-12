@@ -1,90 +1,146 @@
 import SwiftUI
+import AVFoundation
 
 struct ContentView: View {
+    @Environment(\.scenePhase) var scenePhase
+    @State private var path = NavigationPath()
+    @StateObject var bgMusic = AudioPlayer()
+
+    @State private var audioSelectionShowing: Bool = false
+    
     @State private var imageSize: CGFloat = 1 // Initial size
     @State private var dragOffset: CGFloat = 0 // Tracks button position
     
     @State var imageIsActive: Bool = false
     @State var imageIsBig: Bool = false
-    @State private var timerStartDate: Date? = nil
     
-    var imageSizeTracker: Bool {
-        if imageSize > 100 {
+    
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State var timerValue: Duration = .seconds(10)
+    var timerIsActive: Bool {
+        if imageSize > 100  {
             return true
         } else {
             return false
         }
     }
     
-    var timerInterval: ClosedRange<Date> {
-            let now = Date()
-            let endDate = timerStartDate.map { $0.addingTimeInterval(2 * 60) } ?? now
-            return now...endDate
-        }
+    @State private var sessionComplete: Bool = false
+    
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                
-                AnimatedMeshView()
-                    .accessibilityHidden(true)
-                
-                VStack {
-                    if timerStartDate != nil {
-                        Text(timerInterval: timerInterval)
-                            .font(.largeTitle).bold()
-                            .opacity(0.5)
-                        
-                    } else {
-                        Text("2:00")
-                            .font(.largeTitle).bold()
-                            .opacity(0.05)
-                    }
+            NavigationStack(path: $path) {
+                ZStack {
                     
-                    Spacer()
+                    AnimatedMeshView()
+                        .accessibilityHidden(true)
                     
-                    // Image with dynamic size
-                    Image("rabbit")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: imageSize, height: imageSize)
-                    
-                    Spacer()
-                    
-                    // Constrained draggable area
                     VStack {
-                        Text("Hold the button for 3 seconds to start the session")
-                            .multilineTextAlignment(.center)
-                        ZStack(alignment: Alignment(horizontal: .trailing, vertical: .center)) {
-                            // Invisible track
-                            Capsule()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 50)
-                            Text("Full size")
-                                .opacity(imageIsActive ? 0.5 : 0)
-                                .padding()
-                            
-                            // Draggable button
-                            HStack {
-                                DraggableSizeControl(
-                                    imageIsActive: $imageIsActive,
-                                    imageIsBig: $imageIsBig,
-                                    timerStartDate: $timerStartDate,
-                                    dragOffset: $dragOffset,
-                                    imageSize: $imageSize,
-                                    totalWidth: geometry.size.width,
-                                    minSize: 10,
-                                    maxSize: geometry.size.width * 0.9
-                                )
-                                Spacer()
+                        
+                        Text("\(timerValue.formatted(.time(pattern: .minuteSecond(padMinuteToLength: 1))))")
+                            .font(.largeTitle).bold()
+                            .foregroundStyle(.darkPurple)
+                            .opacity(timerIsActive ? 0.5 : 0.05)
+                            .onReceive(timer) { time in
+                                guard timerIsActive else { return }
+                                if timerValue > .zero {
+                                    timerValue -= .seconds(1)
+                                } else {
+                                    sessionComplete = true
+                                }
                             }
+
+                        
+                        Spacer()
+                        
+                        // Image with dynamic size
+                        if imageIsActive {
+                            Image("rabbit")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: imageSize, height: imageSize)
                         }
-                        Text("Release the button at any time to hide the image")
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .padding(.top, 10)
+                        
+                        Spacer()
+                        
+                        // Constrained draggable area
+                        VStack {
+                            Text("Hold the button for 3 seconds to start the session")
+                                .multilineTextAlignment(.center)
+                            ZStack(alignment: Alignment(horizontal: .trailing, vertical: .center)) {
+                                // Invisible track
+                                Capsule()
+                                    .fill(Color.gray.opacity(0.2))
+                                    .frame(height: 50)
+                                Text("Full size")
+                                    .opacity(imageIsActive ? 0.4 : 0)
+                                    .padding()
+                                
+                                // Draggable button
+                                HStack {
+                                    DraggableSizeControl(
+                                        imageIsActive: $imageIsActive,
+                                        imageIsBig: $imageIsBig,
+                                        dragOffset: $dragOffset,
+                                        imageSize: $imageSize,
+                                        totalWidth: geometry.size.width,
+                                        minSize: 10,
+                                        maxSize: geometry.size.width * 0.9
+                                    )
+                                    Spacer()
+                                }
+                            }
+                            Text("Release the button at any time to hide the image")
+                                .font(.caption)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 10)
+                        }
+                        .padding()
                     }
-                    .padding()
+                }
+                .onAppear {
+//                    bgMusic.playPauseAudio()
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Image(bgMusic.isPlaying ? "custom.music.quarternote.3" : "custom.music.quarternote.3.slash")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 30)
+                            .foregroundStyle(.darkPurple).opacity(0.5)
+                            .padding(.trailing, 20)
+                            .onTapGesture {
+                                bgMusic.playPauseAudio()
+                            }
+                            .onLongPressGesture(minimumDuration: 1.5) {
+                                audioSelectionShowing = true
+                            }
+                    }
+                }
+                .confirmationDialog("Select background music", isPresented: $audioSelectionShowing) {
+                    Button("Hymn") {
+                        bgMusic.setMusic("hymn")
+                    }
+                    Button("Petrichor") {
+                        bgMusic.setMusic("petrichor")
+                    }
+                    Button("Restoration") {
+                        bgMusic.setMusic("restoration")
+                    }
+                    Button("Sky") {
+                        bgMusic.setMusic("sky")
+                    }
+                }
+                .onChange(of: sessionComplete) { _, _ in
+                    if sessionComplete {
+                        path.append("completedSession")
+                    }
+                }
+                .navigationDestination(for: String.self) { value in
+                    if value == "completedSession" {
+                        EmptyView()
+                    }
                 }
             }
         }
@@ -94,7 +150,6 @@ struct ContentView: View {
 struct DraggableSizeControl: View {
     @Binding var imageIsActive: Bool
     @Binding var imageIsBig: Bool
-    @Binding var timerStartDate: Date?
     @Binding var dragOffset: CGFloat
     @Binding var imageSize: CGFloat
     let totalWidth: CGFloat
@@ -118,14 +173,26 @@ struct DraggableSizeControl: View {
             }
         }
         
-        var isActive: Bool {
+        var isPressing: Bool {
             switch self {
             case .inactive:
                 return false
-            case .pressing, .dragging:
+            case .pressing:
+                return true
+            case .dragging:
+                return false
+            }
+        }
+        
+        var isActive: Bool {
+            switch self {
+            case .inactive, .pressing:
+                return false
+            case .dragging:
                 return true
             }
         }
+        
         
         var isDragging: Bool {
             switch self {
@@ -143,14 +210,14 @@ struct DraggableSizeControl: View {
     
     var body: some View {
         Circle()
-            .fill(dragState.isActive ? Color.teal : Color.gray)
+            .fill(dragState.isActive ? Color.darkGreen : Color.darkPurple.mix(with: .darkOrange, by: 0.45))
             .overlay(
                 Circle()
-                    .trim(from: 0, to: dragState.isActive ? 1 : 0)
+                    .trim(from: 0, to: dragState.isPressing ? 1 : 0)
                     .stroke(style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .foregroundStyle(.teal.mix(with: .black, by: 0.1))
+                    .foregroundStyle(.darkGreen.mix(with: .black, by: 0.1))
                     .rotationEffect(.degrees(-90))
-                    .animation(.default, value: dragState.isActive)
+                    .animation(.default, value: dragState.isPressing)
             )
             .frame(width: 120, height: 120)
             .gesture(
@@ -160,16 +227,18 @@ struct DraggableSizeControl: View {
                     .updating($dragState) { value, state, transaction in
                         switch value {
                         case .first(true):
+                            transaction.animation = Animation.bouncy()
                             state = .pressing
                             accumulatedOffset = 0
-                            withAnimation {
-                                imageIsActive = true
-                            }
+                            
                         case .second(true, let drag):
+                            print(state)
                             state = .dragging(translation: drag?.translation ?? .zero)
                             guard let drag = drag else { return }
                             let dragWidth = totalWidth * 0.65
-
+                            withAnimation {
+                                imageIsActive = true
+                            }
                              // Accumulate offset to smooth out the drag
                              accumulatedOffset += drag.translation.width
 
@@ -179,11 +248,7 @@ struct DraggableSizeControl: View {
                              // Map drag offset to image size
                             withAnimation {
                                 imageSize = minSize + (dragOffset / dragWidth * sizeRange)
-                                if imageSize > 100 && timerStartDate == nil {
-                                    timerStartDate = Date()
-                                }
                             }
-
                         default:
                             state = .inactive
                         }
