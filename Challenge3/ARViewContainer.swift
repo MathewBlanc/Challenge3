@@ -3,7 +3,7 @@
 //  Challenge3
 //
 //  Created by Mathew Blanc on 12/12/24.
-//  Adapted from Tiago Pereira and Matteo Altobello
+//  Adapted from Tiago Pereira and Matteo Altobello:
 //  https://www.createwithswift.com/creating-an-augmented-reality-app-in-swiftui-using-realitykit-and-arkit/
 
 import SwiftUI
@@ -31,10 +31,12 @@ struct ARViewContainer: UIViewRepresentable {
         
         let anchorEntity = AnchorEntity(plane: .any)
         
-        guard let modelEntity = try? Entity.loadModel(named: "bunny3") else {
+        guard let modelEntity = try? Entity.loadModel(named: "Bunny5") else {
             print("model not loaded")
             return
         }
+
+//        modelEntity.scale = SIMD3<Float>(0.1, 0.1, 0.1)
         
         anchorEntity.addChild(modelEntity)
         uiView.scene.addAnchor(anchorEntity)

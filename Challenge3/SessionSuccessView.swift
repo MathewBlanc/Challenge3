@@ -77,7 +77,7 @@ struct SessionSuccessView: View {
                 .onAppear {
                     counter += 1
                 }
-                .confettiCannon(counter: $counter, num: 100, confettis: [.text("🎉")], confettiSize: 20)
+                .confettiCannon(counter: $counter, num: 100, colors: [.extraDarkGreen, .darkOrange, .darkPink, .lightPurple], confettiSize: 10, opacity: 0.5, radius: 400)
                 .navigationBarBackButtonHidden()
             }
         }
