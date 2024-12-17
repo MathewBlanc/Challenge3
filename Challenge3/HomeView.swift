@@ -45,10 +45,10 @@ struct HomeView: View {
                         .font(.title)
                         
                         Button("info", systemImage: "questionmark.circle") {
-                            ARSessionTip.isVisible.toggle()
+                            SliderSessionTip.isVisible.toggle()
                             try? Tips.resetDatastore()
                         }
-                        .popoverTip(arTip, arrowEdge: .bottom)
+                        .popoverTip(sliderTip, arrowEdge: .bottom)
                         //                .onTapGesture {
                         //                    arTip.invalidate(reason: .actionPerformed)
                         //                }
@@ -64,10 +64,10 @@ struct HomeView: View {
                         .buttonStyle(.borderedProminent)
                         .font(.title)
                         Button("info", systemImage: "questionmark.circle") {
-                            SliderSessionTip.isVisible.toggle()
+                            ARSessionTip.isVisible.toggle()
                             try? Tips.resetDatastore()
                         }
-                        .popoverTip(sliderTip, arrowEdge: .bottom)
+                        .popoverTip(arTip, arrowEdge: .bottom)
 
                     }
                     
@@ -75,6 +75,16 @@ struct HomeView: View {
                 }
                 .padding()
                 .multilineTextAlignment(.center)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        CreditsView()
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+
+                }
             }
             
             
@@ -149,7 +159,7 @@ struct SliderSessionTip: Tip {
     }
     
     var message: Text? {
-        Text("When you start the session, you will use an on-screen slider to increase the size of a photo of your chose stimulus. The image's initial size is 1 pixel (very small!")
+        Text("When you start the session, you will use an on-screen slider to increase the size of a photo of your chose stimulus. The image's initial size is 1 pixel (very small!)")
     }
     
     var image: Image? {
