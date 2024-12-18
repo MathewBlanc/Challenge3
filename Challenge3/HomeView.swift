@@ -20,8 +20,10 @@ struct HomeView: View {
             
             ZStack {
                 
-                Color.darkGreen
-                    .ignoresSafeArea()
+//                Color.darkGreen
+//                    .ignoresSafeArea()
+                
+                AnimatedMeshView()
                 
                 VStack(spacing: 40) {
                     Text("Welcome to Climb")
@@ -82,6 +84,9 @@ struct HomeView: View {
                         CreditsView()
                     } label: {
                         Image(systemName: "info.circle")
+                            .accessibilityLabel("Credits")
+                            .accessibilityHint("Click for information on where our resources came from.")
+                            .accessibilityAddTraits(.isButton)
                     }
 
                 }
@@ -159,7 +164,7 @@ struct SliderSessionTip: Tip {
     }
     
     var message: Text? {
-        Text("When you start the session, you will use an on-screen slider to increase the size of a photo of your chose stimulus. The image's initial size is 1 pixel (very small!)")
+        Text("When you start the session, you will use an on-screen slider to increase the size of a photo of your chosen stimulus. The image's initial size is 1 pixel (very small!)")
     }
     
     var image: Image? {

@@ -11,7 +11,7 @@ struct CreditsView: View {
     var body: some View {
         ZStack {
             
-            Color.darkGreen
+            Color.accentColor
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
             

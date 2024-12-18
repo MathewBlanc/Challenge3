@@ -23,16 +23,23 @@ struct SessionSuccessView: View {
         NavigationView {
             ZStack {
                 
-                Color.darkGreen
-                    .ignoresSafeArea()
+//                Color.darkGreen
+//                    .ignoresSafeArea()
+                AnimatedMeshView()
                 
                 VStack(alignment: .center, spacing: 30) {
                     
-                    Text("Well done! 🎉")
-                        .font(.largeTitle).bold()
+                    VStack(alignment: .center, spacing: 30) {
+                        Text("Well done! 🎉")
+                            .font(.largeTitle).bold()
+                        Text("You successfully completed an exposure session.")
+                            .multilineTextAlignment(.center)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Well done! You successfully completed an exposure session")
+                    .accessibilitySortPriority(10)
                     
-                    Text("You successfully completed an exposure session.")
-                        .multilineTextAlignment(.center)
+                    
                     
                     Text("How would you rate your Subjective Units of Distress (SUDs) out of 10, right now?")
                         .font(.title3).bold()
@@ -41,6 +48,7 @@ struct SessionSuccessView: View {
                     Text("\(currentSUDs, specifier: "%.0f")")
                         .font(.largeTitle)
                         .fontWeight(.black)
+                        .accessibilityHidden(true)
                     
                     Slider(value: $currentSUDs, in: 0...10, step: 1)
                         .padding(.horizontal, 20)
@@ -52,6 +60,7 @@ struct SessionSuccessView: View {
                     Text("\(highSUDs, specifier: "%.0f")")
                         .font(.largeTitle)
                         .fontWeight(.black)
+                        .accessibilityHidden(true)
                     
                     Slider(value: $highSUDs, in: 0...10, step: 1)
                         .padding(.horizontal, 20)
@@ -64,18 +73,18 @@ struct SessionSuccessView: View {
                     
                 }
                 .padding(30)
-//                .onChange(of: sessionCompleted) { _, _ in
-//                    if sessionCompleted {
-//                        path.append("completedSession")
-//                    }
-//                }
-//                .navigationDestination(for: String.self) { value in
-//                    if value == "completedSession" {
-//                        HomeView()
-//                    }
-//                }
                 .onAppear {
-                    counter += 1
+  
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                UIAccessibility.post(
+                                    notification: .screenChanged,
+                                    argument: "Well done! You successfully completed an exposure session. Please rate your Subjective Units of Distress."
+                                )
+                            }
+                    
+                    if !UIAccessibility.isVoiceOverRunning {
+                        counter += 1
+                    }
                 }
                 .confettiCannon(counter: $counter, num: 100, colors: [.extraDarkGreen, .darkOrange, .darkPink, .lightPurple], confettiSize: 10, opacity: 0.5, radius: 400)
                 .navigationBarBackButtonHidden()

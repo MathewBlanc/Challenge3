@@ -5,7 +5,7 @@ struct SliderSessionView: View {
     @Environment(\.scenePhase) var scenePhase
     @State private var path = NavigationPath()
     @StateObject var bgMusic = AudioPlayer()
-
+    
     @State private var audioSelectionShowing: Bool = false
     
     @State private var imageSize: CGFloat = 1 // Initial size
@@ -41,7 +41,7 @@ struct SliderSessionView: View {
                         Text("\(timerValue.formatted(.time(pattern: .minuteSecond(padMinuteToLength: 1))))")
                             .font(.largeTitle).bold()
                             .foregroundStyle(.darkPurple)
-                            .opacity(timerIsActive ? 0.5 : 0.05)
+                            .opacity(timerIsActive ? 0.7 : 0.05)
                             .onReceive(timer) { time in
                                 guard timerIsActive else { return }
                                 if timerValue > .zero {
@@ -50,12 +50,13 @@ struct SliderSessionView: View {
                                     sessionComplete = true
                                 }
                             }
-
+                            .accessibilityLabel("2 minute timer")
+                        
                         
                         Spacer()
                         
                         // Image with dynamic size
-                        if imageIsActive {
+                        if imageIsActive || UIAccessibility.isVoiceOverRunning {
                             Image("rabbit")
                                 .resizable()
                                 .scaledToFit()
@@ -63,18 +64,20 @@ struct SliderSessionView: View {
                                     RoundedRectangle(cornerRadius: imageSize * 0.10)
                                 )
                                 .frame(width: imageSize, height: imageSize)
+                                .accessibilityHidden(true)
                         }
                         
                         Spacer()
                         
-                        // Constrained draggable area
                         VStack {
-                            Text("Hold the button for 3 seconds to start the session")
+                            Text("Hold the button for 3 seconds to start the session. Then drag to make the image bigger")
                                 .multilineTextAlignment(.center)
                             ZStack(alignment: Alignment(horizontal: .trailing, vertical: .center)) {
                                 // Invisible track
                                 Capsule()
-                                    .fill(Color.gray.opacity(0.2))
+//                                    .fill(Color.black.opacity(0.9))
+                                    .fill(Material.ultraThin)
+//                                    .background(.ultraThinMaterial, in: Capsule())
                                     .frame(height: 50)
                                 Text("Full size")
                                     .opacity(imageIsActive ? 0.4 : 0)
@@ -93,17 +96,29 @@ struct SliderSessionView: View {
                                     )
                                     Spacer()
                                 }
+                                .sensoryFeedback(.success, trigger: imageIsActive)
                             }
-                            Text("Release the button at any time to hide the image")
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 10)
+                            
+                            Text("Release at any time to hide the image")
+                                .font(.footnote)
                                 .padding(.top, 10)
+
                         }
                         .padding()
+                        .accessibilityRepresentation {
+                            Slider(value: $imageSize, in: 1...500, step: 50)
+                                .accessibilityLabel("Change image size")
+                                .accessibilityHint("Use the slider to increase the size of the image.")
+                                .padding(40)
+                        }
+                        .accessibilitySortPriority(10)
                     }
                 }
                 .onAppear {
-//                    bgMusic.playPauseAudio()
+                    bgMusic.playPauseAudio()
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -119,9 +134,12 @@ struct SliderSessionView: View {
                             .onLongPressGesture(minimumDuration: 1.5) {
                                 audioSelectionShowing = true
                             }
+                            .accessibilityLabel("Play or pause background music")
+                            .accessibilityHint("Long press to change the song that is playing")
+                            .accessibilityAddTraits(.isButton)
                     }
                 }
-                .confirmationDialog("Select background music", isPresented: $audioSelectionShowing) {
+                .confirmationDialog("Select background music", isPresented: $audioSelectionShowing, titleVisibility: .visible) {
                     Button("Hymn") {
                         bgMusic.setMusic("hymn")
                     }
@@ -138,6 +156,12 @@ struct SliderSessionView: View {
                 .onChange(of: sessionComplete) { _, _ in
                     if sessionComplete {
                         path.append("completedSession")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            UIAccessibility.post(
+                                notification: .screenChanged,
+                                argument: "Well done! You successfully completed an exposure session. Please rate your Subjective Units of Distress."
+                            )
+                        }
                     }
                 }
                 .navigationDestination(for: String.self) { value in
@@ -208,19 +232,19 @@ struct DraggableSizeControl: View {
     }
     
     @GestureState var dragState = DragState.inactive
-//    @State private var isActive = false
+    //    @State private var isActive = false
     @State private var accumulatedOffset: CGFloat = 0
     
     var body: some View {
         Circle()
-            .fill(dragState.isActive ? Color.darkGreen : Color.darkPurple.mix(with: .darkOrange, by: 0.45))
+            .fill(dragState.isActive ? Color.darkGreen.mix(with: .black, by: 0.1) : Color.accentColor)
             .overlay(
                 Circle()
-                    .trim(from: 0, to: dragState.isPressing ? 1 : 0)
+                    .trim(from: 0, to: dragState.isActive ? 1 : 0)
                     .stroke(style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .foregroundStyle(.darkGreen.mix(with: .black, by: 0.1))
+                    .foregroundStyle(.extraDarkGreen.mix(with: .black, by: 0.1))
                     .rotationEffect(.degrees(-90))
-                    .animation(.default, value: dragState.isPressing)
+                    .animation(.easeIn, value: dragState.isActive)
             )
             .frame(width: 120, height: 120)
             .gesture(
@@ -235,41 +259,42 @@ struct DraggableSizeControl: View {
                             accumulatedOffset = 0
                             
                         case .second(true, let drag):
-//                            print(state)
-                            state = .dragging(translation: drag?.translation ?? .zero)
+                            //                            print(state)
+                            withAnimation {
+                                state = .dragging(translation: drag?.translation ?? .zero)
+                            }
                             guard let drag = drag else { return }
                             let dragWidth = totalWidth * 0.65
-                            withAnimation {
-                                imageIsActive = true
-                            }
-                             // Accumulate offset to smooth out the drag
-                             accumulatedOffset += drag.translation.width
 
-                             // Constrain horizontal movement
-                             dragOffset = min(max(0, accumulatedOffset), dragWidth)
-
-                             // Map drag offset to image size
+                            // Accumulate offset to smooth out the drag
+                            accumulatedOffset += drag.translation.width
+                            
+                            // Constrain horizontal movement
+                            dragOffset = min(max(0, accumulatedOffset), dragWidth)
+                            
+                            // Map drag offset to image size
                             withAnimation {
                                 imageSize = minSize + (dragOffset / dragWidth * sizeRange)
+                                imageIsActive = true
                             }
                         default:
                             state = .inactive
                         }
                     }
-                     .onEnded { _ in
-//                         isActive = false
-                         withAnimation {
-                             dragOffset = 0
-                             imageSize = minSize
-                             accumulatedOffset = 0
-                             imageIsActive = false
-                             imageIsBig = false
-                         }
-                     }
+                    .onEnded { _ in
+                        //                         isActive = false
+                        withAnimation {
+                            dragOffset = 0
+                            imageSize = minSize
+                            accumulatedOffset = 0
+                            imageIsActive = false
+                            imageIsBig = false
+                        }
+                    }
             )
             .offset(x: dragOffset)
     }
-
+    
 }
 
 #Preview {
