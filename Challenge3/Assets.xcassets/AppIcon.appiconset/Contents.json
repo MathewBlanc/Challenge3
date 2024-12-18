@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Climb_icon.png",
+      "filename" : "Light.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Climb_icon_dark.png",
+      "filename" : "Dark.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

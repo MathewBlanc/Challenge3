@@ -25,16 +25,16 @@ struct AnimatedMeshView: View {
                 [sinInRange(0.3...0.6, offset: 0.339, timeScale: 0.784, t: t), sinInRange(1.0...1.2, offset: 1.22, timeScale: 0.772, t: t)],
                 [sinInRange(1.0...1.5, offset: 0.939, timeScale: 0.056, t: t), sinInRange(1.3...1.7, offset: 0.47, timeScale: 0.342, t: t)]
             ], colors: [
-                .darkPink, .darkGreen, .darkOrange,
-                .darkGreen, .darkPink, .darkOrange,
-                .darkOrange, .lightPurple, .darkGreen
+                .green2, .darkGreen, .green3,
+                .green4, .green3, .extraDarkGreen,
+                .extraDarkGreen, .green4, .darkGreen
             ])
             .onAppear {
                 timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
                     t += 0.02
                 }
             }
-            .background(.lightPurple)
+            .background(.green4)
             .ignoresSafeArea()
 
     }
