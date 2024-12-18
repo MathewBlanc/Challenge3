@@ -40,8 +40,8 @@ struct SliderSessionView: View {
                         
                         Text("\(timerValue.formatted(.time(pattern: .minuteSecond(padMinuteToLength: 1))))")
                             .font(.largeTitle).bold()
-                            .foregroundStyle(.darkPurple)
-                            .opacity(timerIsActive ? 0.5 : 0.05)
+                            .foregroundStyle(.accent)
+                            .opacity(timerIsActive ? 0.8 : 0.05)
                             .onReceive(timer) { time in
                                 guard timerIsActive else { return }
                                 if timerValue > .zero {
@@ -74,7 +74,8 @@ struct SliderSessionView: View {
                             ZStack(alignment: Alignment(horizontal: .trailing, vertical: .center)) {
                                 // Invisible track
                                 Capsule()
-                                    .fill(Color.gray.opacity(0.2))
+//                                    .fill(Color.gray.opacity(0.2))
+                                    .fill(Material.ultraThin.opacity(0.8))
                                     .frame(height: 50)
                                 Text("Full size")
                                     .opacity(imageIsActive ? 0.4 : 0)
@@ -111,7 +112,7 @@ struct SliderSessionView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 30)
-                            .foregroundStyle(.darkPurple).opacity(0.5)
+                            .foregroundStyle(.accent).opacity(0.8)
                             .padding(.trailing, 20)
                             .onTapGesture {
                                 bgMusic.playPauseAudio()
@@ -212,17 +213,17 @@ struct DraggableSizeControl: View {
     @State private var accumulatedOffset: CGFloat = 0
     
     var body: some View {
-        Circle()
-            .fill(dragState.isActive ? Color.darkGreen : Color.darkPurple.mix(with: .darkOrange, by: 0.45))
+        RoundedRectangle(cornerRadius: 30)
+            .fill(dragState.isActive ? Color.darkGreen : Color.extraDarkGreen.mix(with: .black, by: 0.2))
             .overlay(
-                Circle()
-                    .trim(from: 0, to: dragState.isPressing ? 1 : 0)
+                RoundedRectangle(cornerRadius: 30)
+                    .trim(from: 0, to: dragState.isActive ? 1 : 0)
                     .stroke(style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .foregroundStyle(.darkGreen.mix(with: .black, by: 0.1))
+                    .foregroundStyle(.extraDarkGreen.mix(with: .black, by: 0.1))
                     .rotationEffect(.degrees(-90))
-                    .animation(.default, value: dragState.isPressing)
+                    .animation(.default, value: dragState.isActive)
             )
-            .frame(width: 120, height: 120)
+            .frame(width: 110, height: 110)
             .gesture(
                 // Combine long press with drag
                 LongPressGesture(minimumDuration: 0.5)
@@ -257,7 +258,6 @@ struct DraggableSizeControl: View {
                         }
                     }
                      .onEnded { _ in
-//                         isActive = false
                          withAnimation {
                              dragOffset = 0
                              imageSize = minSize
